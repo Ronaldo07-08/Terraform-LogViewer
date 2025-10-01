@@ -9,7 +9,7 @@ app = FastAPI(title="Terraform LogViewer API", version="1.0.0")
 # Настройка CORS для связи с фронтендом
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # URL React приложения
+    allow_origins=["*"],  # URL React приложения
     allow_credentials=True,
     allow_methods=["*"],  # Разрешаем все HTTP методы
     allow_headers=["*"],  # Разрешаем все заголовки
@@ -24,19 +24,12 @@ logs_storage = {}
 
 @app.post("/api/upload")
 async def upload_log_file(file: UploadFile = File(...)):
-    """
-    Эндпоинт для загрузки Terraform лог файла
-    Принимает файл -> парсит -> возвращает структурированные данные
-    """
     try:
-        # Читаем содержимое файла
         content = await file.read()
         log_text = content.decode('utf-8')
 
-        # Парсим лог с помощью нашего парсера
         parsed_data = parser.parse_log_file(log_text)
 
-        # Сохраняем в временное хранилище
         log_id = f"log_{len(logs_storage) + 1}"
         logs_storage[log_id] = parsed_data
 
@@ -48,7 +41,6 @@ async def upload_log_file(file: UploadFile = File(...)):
         }
 
     except Exception as e:
-        # Если что-то пошло не так - возвращаем ошибку
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
 
@@ -65,12 +57,4 @@ async def get_logs(log_id: str):
 
 @app.get("/health")
 async def health_check():
-    """
-    Простой health-check для проверки работы сервера
-    """
     return {"status": "healthy", "service": "Terraform LogViewer API"}
-
-
-# Запуск сервера (для разработки)
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

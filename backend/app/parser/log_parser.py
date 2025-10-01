@@ -10,9 +10,6 @@ class TerraformLogParser:
         self.apply_section = False
 
     def parse_log_file(self, log_text: str) -> Dict[str, Any]:
-        """
-        Основной метод парсинга всего лог-файла
-        """
         lines = log_text.split('\n')
         parsed_logs = []
 
@@ -35,16 +32,12 @@ class TerraformLogParser:
         }
 
     def _parse_single_line(self, line: str, line_number: int) -> Optional[Dict[str, Any]]:
-        """
-        Парсинг одной строки лога
-        """
         if not line.strip():  # Пропускаем пустые строки
             return None
 
         # Определяем секцию (plan/apply)
         self._detect_section(line)
 
-        # Извлекаем данные из строки
         timestamp = self._extract_timestamp(line)
         log_level = self._extract_log_level(line)
         tf_req_id = self._extract_tf_req_id(line)
@@ -62,9 +55,6 @@ class TerraformLogParser:
         }
 
     def _detect_section(self, line: str):
-        """
-        Определяет в какой секции (plan/apply) мы находимся
-        """
         line_lower = line.lower()
 
         if 'terraform plan' in line_lower or 'running plan' in line_lower:
@@ -78,9 +68,6 @@ class TerraformLogParser:
             self.apply_section = False
 
     def _get_current_section(self) -> str:
-        """
-        Возвращает текущую секцию
-        """
         if self.plan_section:
             return "plan"
         elif self.apply_section:
