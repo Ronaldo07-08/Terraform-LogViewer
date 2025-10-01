@@ -55,14 +55,22 @@ async function uploadFile() {
     }
 
     const btn = document.getElementById('uploadBtn');
+    const loader = document.getElementById('loader');
+    
+    // Показываем лоадер, скрываем кнопку
     btn.disabled = true;
-    btn.textContent = '⏳ Обработка...';
+    btn.style.display = 'none';
+    loader.style.display = 'block';
+    
+    // Очищаем предыдущие результаты
+    document.getElementById('result').innerHTML = '';
 
     try {
+        // ТВОЙ СУЩЕСТВУЮЩИЙ КОД ДЛЯ ОТПРАВКИ НА БЭКЕНД
         const formData = new FormData();
         formData.append('file', selectedFile);
 
-        const response = await fetch(`${API_BASE_URL}/api/upload`, {
+        const response = await fetch('http://localhost:8000/api/upload', {
             method: 'POST',
             body: formData
         });
@@ -78,8 +86,10 @@ async function uploadFile() {
         showResult(`Ошибка загрузки: ${error.message}`, 'error');
         console.error('Error:', error);
     } finally {
+        // Восстанавливаем кнопку, скрываем лоадер
         btn.disabled = false;
-        btn.textContent = '🚀 Анализировать';
+        btn.style.display = 'block';
+        loader.style.display = 'none';
     }
 }
 

@@ -17,10 +17,15 @@
             <input type="file" id="fileInput" class="file-input" accept=".log,.txt,.json">
             <div id="fileInfo"></div>
         </div>
-
+        
         <button class="upload-btn" onclick="uploadFile()" id="uploadBtn" disabled>🚀 Анализировать</button>
-
-        <div id="result"></div>
+        
+        <div id="loader" style="display: none; margin: 30px 0; text-align: center;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px;">
+        <div class="spinner"></div>
+        <h4 style="margin: 0; color: #007bff;">Анализируем лог файл...</h4>
+    </div>
+    <p style="color: #666; margin: 0;">Это может занять несколько секунд</p>
     </div>
 
     <script src="script.js"></script>
