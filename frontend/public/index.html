@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h1>🔍 Terraform LogViewer</h1>
-        <p>Загрузите Terraform лог для анализа</p>
+        <p class="subtitle">Анализ и визуализация логов Terraform</p>
 
         <div class="upload-area" onclick="document.getElementById('fileInput').click()">
             <h3>📁 Загрузка лог-файла</h3>
@@ -17,10 +17,64 @@
             <input type="file" id="fileInput" class="file-input" accept=".log,.txt,.json">
             <div id="fileInfo"></div>
         </div>
+        
+        <button class="upload-btn" onclick="uploadFile()" id="uploadBtn" disabled>🚀 Анализировать файл</button>
+        
+        <div id="loader" style="display: none; margin: 30px 0; text-align: center;">
+            <div style="display: inline-flex; align-items: center; gap: 15px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                <div class="spinner"></div>
+                <div style="text-align: left;">
+                    <h4 style="margin: 0 0 5px 0; color: #007bff;">Анализируем лог-файл...</h4>
+                    <p style="color: #666; margin: 0; font-size: 14px;">Отправляем данные на бэкенд</p>
+                </div>
+            </div>
+        </div>
 
-        <button class="upload-btn" onclick="uploadFile()" id="uploadBtn" disabled>🚀 Анализировать</button>
-
+        <!-- Блок результатов -->
         <div id="result"></div>
+
+        <!-- Табличное отображение логов -->
+        <div id="log-table" style="display: none; margin-top: 30px;">
+            <h4>📋 Детализированный просмотр логов</h4>
+            
+            <!-- Фильтры и поиск -->
+            <div style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="filterLogs('all')" class="filter-btn active">Все</button>
+                    <button onclick="filterLogs('error')" class="filter-btn">Ошибки</button>
+                    <button onclick="filterLogs('warning')" class="filter-btn">Предупреждения</button>
+                    <button onclick="filterLogs('info')" class="filter-btn">Инфо</button>
+                    <button onclick="filterLogs('debug')" class="filter-btn">Отладка</button>
+                    <button onclick="filterLogs('trace')" class="filter-btn">Трассировка</button>
+                    <button onclick="filterLogs('resource')" class="filter-btn">Ресурсы</button>
+                </div>
+                
+                <!-- Поле поиска -->
+                <div style="margin-left: auto;">
+                    <input type="text" id="search-input" placeholder="Поиск по логам..." 
+                           onkeyup="searchLogs()" style="padding: 8px 16px; border: 2px solid #bdc3c7; border-radius: 20px; font-size: 14px; width: 250px;">
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Время</th>
+                            <th>Уровень</th>
+                            <th>Ресурс</th>
+                            <th>Секция</th>
+                            <th>Сообщение</th>
+                            <th>Req ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-table-body">
+                        <!-- Сюда вставляются строки логов -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
     <script src="script.js"></script>
