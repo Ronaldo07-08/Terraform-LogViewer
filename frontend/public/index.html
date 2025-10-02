@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform LogViewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-area:hover {
+            background: #f8f9fa;
+            border-color: #0056b3;
+        }
+        .file-input {
+            display: none;
+        }
+        .upload-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .upload-btn:hover {
+            background: #0056b3;
+        }
+        .upload-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .stats {
+            text-align: left;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Terraform LogViewer</h1>
+        <p>Загрузите Terraform лог для анализа</p>
+        
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <h3>📁 Загрузка лог-файла</h3>
+            <p>Нажмите чтобы выбрать файл или перетащите его сюда</p>
+            <input type="file" id="fileInput" class="file-input" accept=".log,.txt,.json">
+            <div id="fileInfo"></div>
+        </div>
+
+        <button class="upload-btn" onclick="uploadFile()" id="uploadBtn">🚀 Анализировать</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        // Обработчик выбора файла
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                document.getElementById('fileInfo').innerHTML = 
+                    `<strong>Выбран файл:</strong> ${selectedFile.name} (${(selectedFile.size / 1024).toFixed(2)} KB)`;
+                document.getElementById('uploadBtn').disabled = false;
+            }
+        });
+
+        // Функция загрузки файла
+        async function uploadFile() {
+            if (!selectedFile) {
+                showResult('Пожалуйста, выберите файл', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('uploadBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Обработка...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const response = await fetch('http://localhost:8000/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                showSuccessResult(result);
+
+            } catch (error) {
+                showResult(`Ошибка загрузки: ${error.message}`, 'error');
+                console.error('Error:', error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Анализировать';
+            }
+        }
+
+        // Показать успешный результат
+        function showSuccessResult(data) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result success';
+            
+            let statsHtml = '';
+            if (data.summary) {
+                statsHtml = `
+                    <div class="stats">
+                        <h4>📊 Статистика:</h4>
+                        <ul>
+                            <li>Строк обработано: ${data.summary.total_lines || 0}</li>
+                            <li>Ошибок: ${data.summary.error_count || 0}</li>
+                            <li>Предупреждений: ${data.summary.warning_count || 0}</li>
+                        </ul>
+                    </div>
+                `;
+            }
+
+            resultDiv.innerHTML = `
+                <h3>✅ Файл успешно обработан!</h3>
+                <p><strong>ID:</strong> ${data.log_id}</p>
+                <p><strong>Статус:</strong> ${data.message}</p>
+                ${statsHtml}
+            `;
+        }
+
+        // Показать сообщение об ошибке
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = message;
+        }
+
+        // Drag and drop поддержка
+        const uploadArea = document.querySelector('.upload-area');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = '#e9ecef';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.background = '';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = '';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                selectedFile = files[0];
+                document.getElementById('fileInfo').innerHTML = 
+                    `<strong>Выбран файл:</strong> ${selectedFile.name} (${(selectedFile.size / 1024).toFixed(2)} KB)`;
+                document.getElementById('uploadBtn').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
